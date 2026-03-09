@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ChevronUp, Home, Calendar, Heart, Church, Users, X } from 'lucide-react';
 function LogoSmall() {
   return (
@@ -30,12 +30,20 @@ const menuItemsMobileMais = [
 
 const DESKTOP_BREAKPOINT_PX = 1024;
 
+function isMobileItemActive(pathname, to) {
+  if (to === '/') return pathname === '/';
+  return pathname === to || pathname.startsWith(to + '/');
+}
+
 export function Navigation() {
+  const { pathname } = useLocation();
   const [isMaisOpen, setIsMaisOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== 'undefined' && window.innerWidth >= DESKTOP_BREAKPOINT_PX
   );
+
+  const isMaisActive = pathname === '/igreja' || pathname === '/departamentos';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -153,15 +161,20 @@ export function Navigation() {
           <div className="flex items-stretch max-w-lg mx-auto">
             {menuItemsMobileMain.map((item) => {
               const Icon = item.Icon;
+              const active = isMobileItemActive(pathname, item.to);
               return (
                 <Link
                   key={item.to}
                   to={item.to}
                   onClick={handleLinkClick}
-                  className="flex-1 py-3 px-2 flex flex-col items-center gap-1.5 text-sm font-medium text-[#374151] hover:text-[#374151] active:bg-[#e5e7eb]/30 transition-colors"
+                  className={`flex-1 py-3 px-2 flex flex-col items-center gap-1.5 text-sm transition-colors touch-manipulation ${
+                    active
+                      ? 'font-bold text-[#1f2937] hover:text-[#1f2937] active:bg-[#e5e7eb]/30'
+                      : 'font-medium text-[#374151] hover:text-[#374151] active:bg-[#e5e7eb]/30'
+                  }`}
                 >
-                  <Icon className="w-5 h-5 shrink-0" />
-                  <span>{item.label}</span>
+                  <Icon className={`w-5 h-5 shrink-0 ${active ? 'text-[#1f2937]' : ''}`} strokeWidth={active ? 2.5 : 2} />
+                  <span className={active ? 'font-bold' : ''}>{item.label}</span>
                 </Link>
               );
             })}
@@ -173,10 +186,14 @@ export function Navigation() {
                 e.stopPropagation();
                 setIsMaisOpen(true);
               }}
-              className="flex-1 py-3 px-2 flex flex-col items-center gap-1.5 text-sm font-medium text-[#374151] hover:text-[#374151] active:bg-[#e5e7eb]/30 transition-colors touch-manipulation"
+              className={`flex-1 py-3 px-2 flex flex-col items-center gap-1.5 text-sm transition-colors touch-manipulation ${
+                isMaisActive
+                  ? 'font-bold text-[#1f2937] hover:text-[#1f2937] active:bg-[#e5e7eb]/30'
+                  : 'font-medium text-[#374151] hover:text-[#374151] active:bg-[#e5e7eb]/30'
+              }`}
             >
-              <ChevronUp className="w-5 h-5 shrink-0" />
-              <span>Mais</span>
+              <ChevronUp className={`w-5 h-5 shrink-0 ${isMaisActive ? 'text-[#1f2937]' : ''}`} strokeWidth={isMaisActive ? 2.5 : 2} />
+              <span className={isMaisActive ? 'font-bold' : ''}>Mais</span>
             </button>
           </div>
         </div>

@@ -211,3 +211,10 @@ html {
     display: none !important;
   }
 }
+
+/* Typebot: sobe o globo no mobile para ficar acima da barra de botões (barra não é alterada) */
+@media (max-width: 1023px) {
+  typebot-bubble {
+    bottom: 88px !important;
+  }
+}
