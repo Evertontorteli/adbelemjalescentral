@@ -1,3 +1,4 @@
+// Site AD Belém Jales
 import { createRoot } from "react-dom/client";
 import Typebot from "@typebot.io/js/dist/web.js";
 import App from "./App.jsx";
