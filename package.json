@@ -65,6 +65,7 @@
       },
       "scripts": {
             "dev": "parcel index.html",
-            "build": "parcel build index.html --dist-dir build"
+            "build": "parcel build index.html --dist-dir build",
+            "deploy:test": "vercel --prod"
       }
 }
