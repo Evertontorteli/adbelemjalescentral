@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronUp, Home, Calendar, Heart, Church, Users, X } from 'lucide-react';
+import { ChevronUp, Home, Calendar, Heart, Church, Users, FileText, X } from 'lucide-react';
 function LogoSmall() {
   return (
     <div className="relative size-10 shrink-0 flex items-center justify-center">
@@ -14,7 +14,8 @@ const menuItemsDesktop = [
   { label: 'Eventos', to: '/eventos' },
   { label: 'Igreja', to: '/igreja' },
   { label: 'Doação', to: '/doacao' },
-  { label: 'Departamentos', to: '/departamentos' }
+  { label: 'Departamentos', to: '/departamentos' },
+  { label: 'Edital', to: '/edital' }
 ];
 
 const menuItemsMobileMain = [
@@ -25,7 +26,8 @@ const menuItemsMobileMain = [
 
 const menuItemsMobileMais = [
   { label: 'Igreja', to: '/igreja', Icon: Church },
-  { label: 'Departamentos', to: '/departamentos', Icon: Users }
+  { label: 'Departamentos', to: '/departamentos', Icon: Users },
+  { label: 'Edital', to: '/edital', Icon: FileText }
 ];
 
 const DESKTOP_BREAKPOINT_PX = 1024;
@@ -43,7 +45,7 @@ export function Navigation() {
     typeof window !== 'undefined' && window.innerWidth >= DESKTOP_BREAKPOINT_PX
   );
 
-  const isMaisActive = pathname === '/igreja' || pathname === '/departamentos';
+  const isMaisActive = pathname === '/igreja' || pathname === '/departamentos' || pathname === '/edital';
 
   useEffect(() => {
     const handleScroll = () => {

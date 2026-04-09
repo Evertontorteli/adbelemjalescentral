@@ -8,6 +8,7 @@ import EventosPage from './pages/Eventos.jsx';
 import IgrejaPage from './pages/Igreja.jsx';
 import DoacaoPage from './pages/Doacao.jsx';
 import DepartamentosPage from './pages/Departamentos.jsx';
+import EditalPage from './pages/Edital.jsx';
 
 function SpeedInsightsRouter() {
   const location = useLocation();
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="/igreja" element={<IgrejaPage />} />
         <Route path="/doacao" element={<DoacaoPage />} />
         <Route path="/departamentos" element={<DepartamentosPage />} />
+        <Route path="/edital" element={<EditalPage />} />
       </Routes>
       <SpeedInsightsRouter />
       <VercelAnalytics />
