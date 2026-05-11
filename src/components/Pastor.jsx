@@ -33,13 +33,13 @@ export function Pastor() {
 
         <div className="max-w-2xl mx-auto">
           <div className="relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 overflow-hidden">
-            <div className="p-8 md:p-10 flex flex-col sm:flex-row items-center gap-8 sm:gap-10">
+            <div className="p-8 md:p-10 flex flex-col items-center gap-8">
               {/* Círculo: foto com enquadramento que mantém a cabeça inteira visível */}
               <div className="shrink-0 w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-full overflow-hidden ring-4 ring-white shadow-xl bg-gray-100">
                 <img
                   src="/static/pastor.png"
                   alt="Pastor local"
-                  className="w-full h-full object-cover object-[50%_35%]"
+                  className="w-full h-full object-cover object-top"
                 />
               </div>
             <div className="flex-1 text-left min-w-0">
