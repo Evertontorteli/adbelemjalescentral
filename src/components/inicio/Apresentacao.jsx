@@ -59,7 +59,6 @@ export function Apresentacao() {
           <br />
           Uma igreja de portas abertas para sua família.
         </p>
-        <div className="h-1 w-32 bg-[#374151]/40 mx-auto rounded-full" />
       </div>
 
       <a
