@@ -309,41 +309,49 @@ export default function Eventos() {
   const [swReg, setSwReg] = useState(null);
 
   const fetchEvents = useCallback(async () => {
-    if (!API_KEY || !CALENDAR_ID) {
-      setError('Calendário ainda não configurado. Em breve você poderá ver os eventos aqui.');
-      setEvents([]);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      const { timeMin, timeMax } = getMonthBounds(month, year);
-      const calendarId = encodeURIComponent(CALENDAR_ID);
-      const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?` +
-        `key=${API_KEY}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=50`;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error?.message || `Erro ${res.status}`);
+      let items = [];
+
+      const apiUrl = `/api/calendar-events?month=${month}&year=${year}`;
+      const apiRes = await fetch(apiUrl, { signal: controller.signal });
+
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        items = data.items || [];
+      } else if (API_KEY && CALENDAR_ID) {
+        const { timeMin, timeMax } = getMonthBounds(month, year);
+        const calendarId = encodeURIComponent(CALENDAR_ID);
+        const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?` +
+          `key=${API_KEY}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=50`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error?.message || `Erro ${res.status}`);
+        }
+        const data = await res.json();
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const startOfTodayMs = startOfToday.getTime();
+        items = (data.items || []).filter((e) => {
+          if (e.status === 'cancelled') return false;
+          const start = e.start?.dateTime || e.start?.date;
+          if (!start) return false;
+          const d = new Date(start);
+          const eventStartMs = e.start?.date
+            ? new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+            : d.getTime();
+          return eventStartMs >= startOfTodayMs;
+        });
+      } else {
+        const data = await apiRes.json().catch(() => ({}));
+        throw new Error(data.error || `Erro ${apiRes.status}`);
       }
-      const data = await res.json();
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
-      const startOfTodayMs = startOfToday.getTime();
-      const items = (data.items || []).filter((e) => {
-        if (e.status === 'cancelled') return false;
-        const start = e.start?.dateTime || e.start?.date;
-        if (!start) return false;
-        const d = new Date(start);
-        const eventStartMs = e.start?.date
-          ? new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-          : d.getTime();
-        return eventStartMs >= startOfTodayMs;
-      });
+
+      clearTimeout(timeoutId);
       setEvents(items);
     } catch (err) {
       setEvents([]);
