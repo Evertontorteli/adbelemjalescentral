@@ -218,3 +218,8 @@ html {
     bottom: 88px !important;
   }
 }
+
+/* Barra inferior do celular: respeita a área do gesto/home do iPhone */
+.safe-area-pb {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}

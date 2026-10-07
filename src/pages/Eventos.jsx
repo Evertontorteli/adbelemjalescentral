@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Calendar as CalendarIcon, Loader2, AlertCircle, Bell, BellOff } from 'lucide-react';
+import { Loader2, AlertCircle, Bell, BellOff, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 
 function WhatsAppIcon({ className }) {
   return (
@@ -42,20 +42,6 @@ function getEventImageUrl(event) {
     if (urlMatch) return urlMatch[1];
   }
   return null;
-}
-
-function getDayMonth(dateStr) {
-  if (!dateStr) return { day: '—', month: '' };
-  try {
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return { day: '—', month: '' };
-    return {
-      day: d.getDate().toString(),
-      month: d.toLocaleDateString('pt-BR', { month: 'long' }),
-    };
-  } catch {
-    return { day: '—', month: '' };
-  }
 }
 
 function formatEventDateLong(dateStr) {
@@ -107,26 +93,6 @@ function formatTimeRange(start, end, isAllDay) {
     return `${startStr} - ${endStr}`;
   } catch {
     return '';
-  }
-}
-
-function formatEventDate(dateStr, isAllDay) {
-  if (!dateStr) return '—';
-  try {
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return '—';
-    if (isAllDay) {
-      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-    }
-    return d.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return '—';
   }
 }
 
@@ -198,7 +164,7 @@ function getEventShareUrl(event) {
 }
 
 function buildWhatsAppShareText(event, start, isAllDay, dateRangeLabel, formatTimeRange) {
-  const title = event.summary || 'Evento';
+  const title = event.summary?.trim() || 'Evento';
   const timeLabel = formatTimeRange(start, event.end?.dateTime ?? event.end?.date, isAllDay);
   const link = getEventShareUrl(event) || (typeof window !== 'undefined' ? `${window.location.origin}/eventos` : '');
   const lines = [
@@ -213,84 +179,210 @@ function buildWhatsAppShareText(event, start, isAllDay, dateRangeLabel, formatTi
   return lines.join('\n');
 }
 
-function EventCard({ event, start, isAllDay, imageUrl, city, badgeColorClass, dateRangeLabel, formatTimeRange }) {
+function shareOnWhatsApp(event) {
+  const start = event.start?.dateTime || event.start?.date;
+  const end = event.end?.dateTime || event.end?.date;
+  const isAllDay = !!event.start?.date;
+  const dateRangeLabel = formatEventDateRangeLong(start, end, isAllDay);
+  const text = buildWhatsAppShareText(event, start, isAllDay, dateRangeLabel, formatTimeRange);
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+}
+
+function getMapsUrl(location) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+}
+
+function isSameDay(dateStr, ref) {
+  const d = new Date(dateStr);
+  return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate();
+}
+
+/** Nome do evento normalizado, para agrupar eventos iguais cadastrados avulsos no Google Calendar. */
+function getTitleKey(event) {
+  return (event.summary || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+/**
+ * Separa os eventos do mês em programação semanal (repetições no Google Calendar
+ * ou mesmo nome mais de uma vez no mês) e eventos especiais (aparecem uma vez só).
+ */
+function splitEvents(events) {
+  const groups = new Map();
+  for (const event of events) {
+    const key = getTitleKey(event) || event.id;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(event);
+  }
+  const weekly = [];
+  const special = [];
+  for (const group of groups.values()) {
+    if (group.length > 1 || group[0].recurringEventId) weekly.push(group);
+    else special.push(group[0]);
+  }
+  return { weekly, special };
+}
+
+function getWeekdayLabel(group) {
+  const weekdays = new Set(group.map((e) => new Date(e.start?.dateTime || e.start?.date).getDay()));
+  if (weekdays.size !== 1) return null;
+  const sample = new Date(group[0].start?.dateTime || group[0].start?.date);
+  const weekday = sample.toLocaleDateString('pt-BR', { weekday: 'long' });
+  const isWeekend = sample.getDay() === 0 || sample.getDay() === 6;
+  return `${isWeekend ? 'Todo' : 'Toda'} ${weekday}`;
+}
+
+function ShareButton({ event, compact = false }) {
+  return (
+    <button
+      type="button"
+      onClick={() => shareOnWhatsApp(event)}
+      className={
+        compact
+          ? 'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#6b7280]/30 bg-white text-[#374151] transition-colors hover:bg-gray-50 active:bg-gray-100'
+          : 'inline-flex min-h-11 items-center gap-2 rounded-full border border-[#6b7280]/30 bg-white px-4 text-sm font-medium text-[#374151] transition-colors hover:bg-gray-50 active:bg-gray-100'
+      }
+      aria-label={`Enviar ${event.summary?.trim() || 'evento'} no WhatsApp`}
+    >
+      <WhatsAppIcon className={compact ? 'h-5 w-5' : 'h-4 w-4'} />
+      {!compact && 'Enviar no WhatsApp'}
+    </button>
+  );
+}
+
+function MapsLink({ location }) {
+  if (!location) return null;
+  return (
+    <a
+      href={getMapsUrl(location)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[#374151] underline decoration-[#6b7280]/50 underline-offset-2 hover:decoration-[#374151]"
+    >
+      <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+      Como chegar
+    </a>
+  );
+}
+
+function EventImage({ imageUrl, className }) {
   const [imgError, setImgError] = useState(false);
-  const showImage = imageUrl != null && !imgError;
-  const timeLabel = formatTimeRange(start, event.end?.dateTime ?? event.end?.date, isAllDay);
+  if (!imageUrl || imgError) return null;
+  return (
+    <div className={`overflow-hidden bg-[#f3f4f6] ${className}`}>
+      <img
+        src={imageUrl}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="h-full w-full object-cover"
+        referrerPolicy="no-referrer"
+        onError={() => setImgError(true)}
+      />
+    </div>
+  );
+}
 
-  const handleShareWhatsApp = () => {
-    const text = buildWhatsAppShareText(event, start, isAllDay, dateRangeLabel, formatTimeRange);
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
-  const showBadge = city != null && String(city).trim() !== '';
+/** Evento que aparece uma vez no mês: cartão em destaque com a data em evidência. */
+function SpecialEventCard({ event, today }) {
+  const start = event.start?.dateTime || event.start?.date;
+  const end = event.end?.dateTime || event.end?.date;
+  const isAllDay = !!event.start?.date;
+  const d = new Date(start);
+  const city = getCityFromLocation(event.location);
+  const timeLabel = formatTimeRange(start, end, isAllDay);
+  const dateRangeLabel = formatEventDateRangeLong(start, end, isAllDay);
+  const isToday = isSameDay(start, today);
 
   return (
     <article
       data-event-id={event.id || undefined}
-      className="flex flex-col overflow-hidden rounded-2xl bg-white p-4 w-full min-h-0 transition-all duration-300 hover:shadow-xl shadow-lg border border-[#e5e7eb]/80"
+      className="flex scroll-mt-6 flex-col overflow-hidden rounded-2xl border border-[#e5e7eb]/80 bg-white shadow-md"
     >
-      {showBadge && (
-        <div className="mb-2">
-          <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${badgeColorClass}`}>
-            {city}
+      <EventImage imageUrl={getEventImageUrl(event)} className="aspect-[16/9] w-full" />
+      <div className="flex gap-4 p-4">
+        <div
+          className={`flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-xl ${
+            isToday ? 'bg-[#374151] text-white' : 'bg-[#f3f4f6] text-[#374151]'
+          }`}
+          aria-hidden
+        >
+          <span className="text-[11px] font-semibold uppercase leading-none">
+            {isToday ? 'Hoje' : d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}
           </span>
+          <span className="mt-1 text-2xl font-bold leading-none">{d.getDate()}</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          {city && (
+            <span className={`mb-1.5 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${getBadgeColorForCity(city)}`}>
+              {city}
+            </span>
+          )}
+          <h3 className="text-lg font-bold leading-snug text-[#374151]">{event.summary?.trim() || 'Sem título'}</h3>
+          <p className="mt-1 text-sm text-[#4b5563]">
+            {dateRangeLabel.charAt(0).toUpperCase() + dateRangeLabel.slice(1)}
+            {timeLabel && <span className="font-semibold text-[#374151]"> · {timeLabel}</span>}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 border-t border-[#e5e7eb] px-4 py-1.5">
+        {event.location ? <MapsLink location={event.location} /> : <span />}
+        <ShareButton event={event} compact />
+      </div>
+    </article>
+  );
+}
+
+/** Culto que se repete no mês: um cartão só, com as datas em chips. */
+function WeeklySeriesCard({ group, today }) {
+  const first = group[0];
+  const start = first.start?.dateTime || first.start?.date;
+  const end = first.end?.dateTime || first.end?.date;
+  const isAllDay = !!first.start?.date;
+  const timeLabels = new Set(group.map((e) => formatTimeRange(e.start?.dateTime || e.start?.date, e.end?.dateTime || e.end?.date, !!e.start?.date)));
+  const sameTime = timeLabels.size === 1;
+  const timeLabel = sameTime ? formatTimeRange(start, end, isAllDay) : '';
+  const weekdayLabel = getWeekdayLabel(group);
+  const imageUrl = group.map(getEventImageUrl).find(Boolean);
+
+  return (
+    <article className="rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <EventImage imageUrl={imageUrl} className="h-14 w-14 shrink-0 rounded-xl" />
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-bold leading-snug text-[#374151]">{first.summary?.trim() || 'Sem título'}</h3>
+          <p className="mt-0.5 text-sm text-[#4b5563]">
+            {weekdayLabel && <span className="first-letter:uppercase">{weekdayLabel}</span>}
+            {weekdayLabel && timeLabel && ' · '}
+            {timeLabel && <span className="font-semibold text-[#374151]">{timeLabel}</span>}
+          </p>
+        </div>
+        <ShareButton event={first} compact />
+      </div>
+      <ul className="mt-3 flex flex-wrap gap-2" aria-label="Datas">
+        {group.map((event) => {
+          const s = event.start?.dateTime || event.start?.date;
+          const isToday = isSameDay(s, today);
+          const d = new Date(s);
+          const chipTime = sameTime ? '' : formatTimeRange(s, null, !!event.start?.date);
+          return (
+            <li
+              key={event.id}
+              data-event-id={event.id || undefined}
+              className={`scroll-mt-6 rounded-full px-3 py-1.5 text-sm font-semibold ${
+                isToday ? 'bg-[#374151] text-white' : 'bg-[#f3f4f6] text-[#374151]'
+              }`}
+            >
+              {isToday ? 'Hoje' : `${d.getDate()}/${String(d.getMonth() + 1).padStart(2, '0')}`}
+              {chipTime && <span className="font-normal"> · {chipTime}</span>}
+            </li>
+          );
+        })}
+      </ul>
+      {first.location && (
+        <div className="mt-1">
+          <MapsLink location={first.location} />
         </div>
       )}
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-[26px] font-bold text-[#374151] leading-tight mt-0">
-            {event.summary || 'Sem título'}
-          </h2>
-          {event.location && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-[24px] block text-[#374151] text-sm leading-snug line-clamp-2 underline decoration-[#6b7280]/50 underline-offset-2 hover:decoration-[#374151] transition-colors"
-            >
-              {event.location}
-            </a>
-          )}
-        </div>
-        {showImage ? (
-          <div className="w-[100px] h-[100px] shrink-0 rounded-xl overflow-hidden bg-[#f3f4f6]">
-            <img
-              src={imageUrl}
-              alt=""
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-              onError={() => setImgError(true)}
-            />
-          </div>
-        ) : (
-          <div className="w-[100px] h-[100px] shrink-0 rounded-xl bg-[#f3f4f6] flex items-center justify-center">
-            <CalendarIcon className="h-10 w-10 text-[#6b7280]/60" aria-hidden />
-          </div>
-        )}
-      </div>
-      <div className="mt-3 pt-2 flex items-center justify-between gap-2 border-t border-[#e5e7eb]">
-        <p className="text-sm font-semibold text-[#374151]">
-          {dateRangeLabel}
-        </p>
-        {timeLabel && (
-          <p className="text-sm font-semibold text-[#374151] shrink-0 ml-auto">
-            {timeLabel}
-          </p>
-        )}
-      </div>
-      <div className="mt-3 flex justify-center">
-        <button
-          type="button"
-          onClick={handleShareWhatsApp}
-          className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-[#374151] border border-[#6b7280]/30 rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm hover:shadow"
-          aria-label="Enviar no WhatsApp"
-        >
-          <WhatsAppIcon className="w-4 h-4" />
-          Enviar no WhatsApp
-        </button>
-      </div>
     </article>
   );
 }
@@ -450,79 +542,101 @@ export default function Eventos() {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [eventIdFromUrl, loading, events]);
 
+  const minYear = years[0];
+  const maxYear = years[years.length - 1];
+  const canGoPrev = !(year === minYear && month === 0);
+  const canGoNext = !(year === maxYear && month === 11);
+  const isCurrentMonth = month === now.getMonth() && year === now.getFullYear();
+
+  const goToMonth = (delta) => {
+    const next = new Date(year, month + delta, 1);
+    setMonth(next.getMonth());
+    setYear(next.getFullYear());
+  };
+
+  const goToToday = () => {
+    setMonth(now.getMonth());
+    setYear(now.getFullYear());
+  };
+
+  const { weekly, special } = splitEvents(events);
+
   return (
-    <div className="min-h-screen bg-white pt-24 pb-40 md:pt-28 md:pb-24">
+    <div className="min-h-screen bg-white pt-8 pb-[calc(8rem+env(safe-area-inset-bottom))] lg:pt-28 lg:pb-24">
       <div className="max-w-5xl mx-auto px-4">
-        <header className="mb-8 text-center">
+        <header className="mb-5 text-center">
           <h1 className="text-3xl md:text-4xl font-semibold text-[#374151] tracking-tight">
             Eventos
           </h1>
-          <p className="mt-2 text-[#374151] text-sm md:text-base">
+          <p className="mt-1 text-[#4b5563] text-sm md:text-base">
             Confira a programação da igreja
           </p>
         </header>
 
-        <div className="mb-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4 sm:px-6 py-4">
-          <span className="text-sm font-semibold text-[#374151] tracking-wide shrink-0">Filtrar por:</span>
-          <div className="flex flex-nowrap items-center gap-3 sm:gap-4 w-full sm:w-auto justify-center sm:justify-start">
-            <div className="flex items-center gap-2">
-              <label htmlFor="month" className="text-sm font-medium text-[#374151] shrink-0">Mês</label>
-              <select
-                id="month"
-                value={month}
-                onChange={(e) => setMonth(Number(e.target.value))}
-                className="rounded-full border border-[#6b7280]/30 bg-white hover:bg-gray-50 text-[#374151] text-sm pl-4 pr-9 py-3 min-h-[2.75rem] min-w-[10rem] w-auto leading-normal transition-all shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#374151]/30 focus:ring-offset-2 appearance-none"
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={m} value={i}>{m}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="year" className="text-sm font-medium text-[#374151] shrink-0">Ano</label>
-              <select
-                id="year"
-                value={year}
-                onChange={(e) => setYear(Number(e.target.value))}
-                className="rounded-full border border-[#6b7280]/30 bg-white hover:bg-gray-50 text-[#374151] text-sm pl-4 pr-9 py-3 min-h-[2.75rem] min-w-[5.5rem] w-auto leading-normal transition-all shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#374151]/30 focus:ring-offset-2 appearance-none"
-              >
-                {years.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+        <nav aria-label="Escolher mês" className="mb-6 flex flex-col items-center gap-1">
+          <div className="flex w-full max-w-sm items-center justify-between rounded-full border border-[#e5e7eb] bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => goToMonth(-1)}
+              disabled={!canGoPrev}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[#374151] transition-colors hover:bg-gray-100 active:bg-gray-200 disabled:opacity-30"
+              aria-label="Mês anterior"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <p className="text-base font-semibold text-[#374151]" aria-live="polite">
+              {MONTHS[month]} {year}
+            </p>
+            <button
+              type="button"
+              onClick={() => goToMonth(1)}
+              disabled={!canGoNext}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[#374151] transition-colors hover:bg-gray-100 active:bg-gray-200 disabled:opacity-30"
+              aria-label="Próximo mês"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
           </div>
-        </div>
+          {!isCurrentMonth && (
+            <button
+              type="button"
+              onClick={goToToday}
+              className="min-h-11 px-3 text-sm font-medium text-[#374151] underline underline-offset-2"
+            >
+              Voltar para o mês atual
+            </button>
+          )}
+        </nav>
 
         {isPushConfigured && pushSupported && (
-          <div className="mb-6 mx-4 rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 shadow-sm">
-            <p className="text-sm font-medium text-[#374151] mb-2">
-              Receba um lembrete no celular 1 hora antes de cada evento
-            </p>
-            {pushError && (
-              <p className="text-sm text-amber-600 mb-2" role="alert">{pushError}</p>
-            )}
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#e5e7eb]/80 bg-[#f9fafb] p-3">
+            <Bell className="h-5 w-5 shrink-0 text-[#374151]" aria-hidden />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-[#374151]">Lembrete no celular 1 hora antes de cada evento</p>
+              {pushError && (
+                <p className="mt-1 text-sm text-amber-600" role="alert">{pushError}</p>
+              )}
+            </div>
             {pushSubscribed ? (
               <button
                 type="button"
                 onClick={handlePushUnsubscribe}
                 disabled={pushLoading}
-                className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-[#374151] border border-[#6b7280]/30 rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm"
+                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-[#6b7280]/30 bg-white px-3 text-sm font-medium text-[#374151] transition-colors hover:bg-gray-50"
                 aria-label="Desativar lembretes"
               >
-                <BellOff className="w-4 h-4" />
-                {pushLoading ? 'Desativando…' : 'Desativar lembretes'}
+                <BellOff className="h-4 w-4" />
+                {pushLoading ? 'Desativando…' : 'Desativar'}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={handlePushSubscribe}
                 disabled={pushLoading}
-                className="inline-flex items-center gap-2 bg-[#374151] hover:bg-[#4b5563] text-white rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm disabled:opacity-70"
+                className="inline-flex min-h-11 shrink-0 items-center rounded-full bg-[#374151] px-4 text-sm font-medium text-white transition-colors hover:bg-[#4b5563] disabled:opacity-70"
                 aria-label="Ativar lembretes 1 hora antes"
               >
-                <Bell className="w-4 h-4" />
-                {pushLoading ? 'Ativando…' : 'Ativar lembretes'}
+                {pushLoading ? 'Ativando…' : 'Ativar'}
               </button>
             )}
           </div>
@@ -548,34 +662,31 @@ export default function Eventos() {
           </p>
         )}
 
-        {!loading && events.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {events.map((event) => {
-              const start = event.start?.dateTime || event.start?.date;
-              const end = event.end?.dateTime || event.end?.date;
-              const isAllDay = !!event.start?.date;
-              const imageUrl = getEventImageUrl(event);
-              const city = getCityFromLocation(event.location);
-              const badgeColorClass = getBadgeColorForCity(city);
-              const dateRangeLabel = formatEventDateRangeLong(start, end, isAllDay);
-              return (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  start={start}
-                  isAllDay={isAllDay}
-                  imageUrl={imageUrl}
-                  city={city}
-                  badgeColorClass={badgeColorClass}
-                  dateRangeLabel={dateRangeLabel}
-                  formatTimeRange={formatTimeRange}
-                />
-              );
-            })}
-          </div>
+        {!loading && special.length > 0 && (
+          <section aria-labelledby="eventos-especiais" className="mb-10">
+            <h2 id="eventos-especiais" className="mb-3 text-lg font-semibold text-[#374151]">
+              Eventos especiais
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-6">
+              {special.map((event) => (
+                <SpecialEventCard key={event.id} event={event} today={now} />
+              ))}
+            </div>
+          </section>
         )}
 
-        <div className="h-40 md:h-24 w-full flex-shrink-0" aria-hidden />
+        {!loading && weekly.length > 0 && (
+          <section aria-labelledby="programacao-semanal">
+            <h2 id="programacao-semanal" className="mb-3 text-lg font-semibold text-[#374151]">
+              Programação semanal
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 md:gap-4">
+              {weekly.map((group) => (
+                <WeeklySeriesCard key={group[0].id} group={group} today={now} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
