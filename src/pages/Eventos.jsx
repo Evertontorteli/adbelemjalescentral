@@ -292,6 +292,7 @@ function SpecialEventCard({ event, today }) {
   const timeLabel = formatTimeRange(start, end, isAllDay);
   const dateRangeLabel = formatEventDateRangeLong(start, end, isAllDay);
   const isToday = isSameDay(start, today);
+  const isMultiDay = dateRangeLabel.includes(' a ');
 
   return (
     <article
@@ -319,8 +320,8 @@ function SpecialEventCard({ event, today }) {
           )}
           <h3 className="text-lg font-bold leading-snug text-[#374151]">{event.summary?.trim() || 'Sem título'}</h3>
           <p className="mt-1 text-sm text-[#4b5563]">
-            {dateRangeLabel.charAt(0).toUpperCase() + dateRangeLabel.slice(1)}
-            {timeLabel && <span className="font-semibold text-[#374151]"> · {timeLabel}</span>}
+            {isMultiDay && <>{dateRangeLabel.charAt(0).toUpperCase() + dateRangeLabel.slice(1)}{timeLabel && ' · '}</>}
+            {timeLabel ? <span className="font-semibold text-[#374151]">{timeLabel}</span> : !isMultiDay && 'Dia todo'}
           </p>
         </div>
       </div>
