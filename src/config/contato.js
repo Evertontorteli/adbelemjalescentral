@@ -11,8 +11,8 @@ export const ENDERECO = {
 
 export const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Avenida Francisco Jalles 3575 Jales SP')}`;
 
-// TODO: trocar pelo número real que recebe os pedidos de oração (formato 55 + DDD + número)
-export const WHATSAPP_ORACAO = '5517999999999';
+// Pedidos de oração: WhatsApp do secretário, Pr. Marcos Aguiar (formato 55 + DDD + número)
+export const WHATSAPP_ORACAO = '5517997443443';
 
 export const ORACAO_URL = `https://wa.me/${WHATSAPP_ORACAO}?text=${encodeURIComponent('Olá, gostaria de fazer um pedido de oração')}`;
 

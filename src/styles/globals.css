@@ -223,3 +223,32 @@ html {
 .safe-area-pb {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
+
+/* Typebot: botão do chat balança e pulsa um anel dourado a cada 6s para chamar atenção */
+typebot-bubble::part(button) {
+  box-shadow: 0 0 0 3px #f5b544, 0 6px 16px rgba(17, 24, 39, 0.25);
+  animation: chat-chamar-atencao 6s ease-in-out 3s infinite;
+}
+@keyframes chat-chamar-atencao {
+  0%, 14%, 100% {
+    transform: rotate(0deg) scale(1);
+    box-shadow: 0 0 0 3px #f5b544, 0 6px 16px rgba(17, 24, 39, 0.25);
+  }
+  2% { transform: rotate(-14deg) scale(1.08); }
+  4% { transform: rotate(12deg) scale(1.08); }
+  6% { transform: rotate(-10deg) scale(1.08); }
+  8% {
+    transform: rotate(8deg) scale(1.05);
+    box-shadow: 0 0 0 10px rgba(245, 181, 68, 0.35), 0 6px 16px rgba(17, 24, 39, 0.25);
+  }
+  10% { transform: rotate(-4deg) scale(1.02); }
+  12% {
+    transform: rotate(0deg) scale(1);
+    box-shadow: 0 0 0 16px rgba(245, 181, 68, 0), 0 6px 16px rgba(17, 24, 39, 0.25);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  typebot-bubble::part(button) {
+    animation: none;
+  }
+}

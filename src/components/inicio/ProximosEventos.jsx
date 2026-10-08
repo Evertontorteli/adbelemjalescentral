@@ -53,7 +53,7 @@ export function ProximosEventos() {
         </Link>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[#e5e7eb]/80 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[#e5e7eb]/80 bg-white shadow-[0_6px_20px_rgba(17,24,39,0.10)]">
         {events === null && !error && (
           <ul aria-label="Carregando eventos">
             {Array.from({ length: QUANTIDADE }, (_, i) => (

@@ -17,7 +17,7 @@ export function Pastor() {
       <h2 id="palavra-pastor" className="mb-3 text-lg font-semibold text-[#374151]">
         Palavra do Pastor
       </h2>
-      <div className="rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 shadow-[0_6px_20px_rgba(17,24,39,0.10)]">
         <div className="flex items-center gap-4">
           <img
             src="/static/pastor-480.jpg"

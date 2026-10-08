@@ -9,12 +9,7 @@ createRoot(document.getElementById("root")).render(<App />);
 
 Typebot.initBubble({
   typebot: "chatadbelemjales",
-  previewMessage: {
-    message: "👋 Olá! Seja bem-vindo(a). Posso te ajudar?",
-    autoShowDelay: 10000,
-    avatarUrl:
-      "https://s3.typebot.io/public/workspaces/clqzc3xhx0048l80fydh10lss/typebots/clqzc8gg3004qjj0ibh0oqxwc/hostAvatar?v=1773067712392",
-  },
+  // Sem balão de boas-vindas automático: o botão chama atenção com animação (ver globals.css)
   theme: {
     button: {
       backgroundColor: "#4A8BB2",

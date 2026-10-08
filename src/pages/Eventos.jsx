@@ -234,7 +234,7 @@ function EventImage({ imageUrl, className, fallback = null }) {
   );
 }
 
-const CARD_CLASS = 'flex scroll-mt-6 flex-col overflow-hidden rounded-2xl border border-[#e5e7eb]/80 bg-white shadow-sm';
+const CARD_CLASS = 'flex scroll-mt-6 flex-col overflow-hidden rounded-2xl border border-[#e5e7eb]/80 bg-white shadow-[0_6px_20px_rgba(17,24,39,0.10)]';
 
 /** Rodapé igual em todos os cartões: "Como chegar" à esquerda, WhatsApp à direita. */
 function CardFooter({ event }) {
