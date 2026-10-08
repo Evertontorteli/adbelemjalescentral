@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Loader2, AlertCircle, Bell, BellOff, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import { Loader2, AlertCircle, Bell, BellOff, ChevronLeft, ChevronRight, MapPin, Repeat } from 'lucide-react';
 
 function WhatsAppIcon({ className }) {
   return (
@@ -264,9 +264,9 @@ function MapsLink({ location }) {
   );
 }
 
-function EventImage({ imageUrl, className }) {
+function EventImage({ imageUrl, className, fallback = null }) {
   const [imgError, setImgError] = useState(false);
-  if (!imageUrl || imgError) return null;
+  if (!imageUrl || imgError) return fallback;
   return (
     <div className={`overflow-hidden bg-[#f3f4f6] ${className}`}>
       <img
@@ -278,6 +278,18 @@ function EventImage({ imageUrl, className }) {
         referrerPolicy="no-referrer"
         onError={() => setImgError(true)}
       />
+    </div>
+  );
+}
+
+const CARD_CLASS = 'flex scroll-mt-6 flex-col overflow-hidden rounded-2xl border border-[#e5e7eb]/80 bg-white shadow-sm';
+
+/** Rodapé igual em todos os cartões: "Como chegar" à esquerda, WhatsApp à direita. */
+function CardFooter({ event }) {
+  return (
+    <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#e5e7eb] px-4 py-1.5">
+      {event.location ? <MapsLink location={event.location} /> : <span />}
+      <ShareButton event={event} compact />
     </div>
   );
 }
@@ -297,12 +309,12 @@ function SpecialEventCard({ event, today }) {
   return (
     <article
       data-event-id={event.id || undefined}
-      className="flex scroll-mt-6 flex-col overflow-hidden rounded-2xl border border-[#e5e7eb]/80 bg-white shadow-md"
+      className={CARD_CLASS}
     >
       <EventImage imageUrl={getEventImageUrl(event)} className="aspect-[16/9] w-full" />
       <div className="flex gap-4 p-4">
         <div
-          className={`flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-xl ${
+          className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl ${
             isToday ? 'bg-[#374151] text-white' : 'bg-[#f3f4f6] text-[#374151]'
           }`}
           aria-hidden
@@ -325,10 +337,7 @@ function SpecialEventCard({ event, today }) {
           </p>
         </div>
       </div>
-      <div className="flex items-center justify-between gap-3 border-t border-[#e5e7eb] px-4 py-1.5">
-        {event.location ? <MapsLink location={event.location} /> : <span />}
-        <ShareButton event={event} compact />
-      </div>
+      <CardFooter event={event} />
     </article>
   );
 }
@@ -346,44 +355,47 @@ function WeeklySeriesCard({ group, today }) {
   const imageUrl = group.map(getEventImageUrl).find(Boolean);
 
   return (
-    <article className="rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 shadow-sm">
-      <div className="flex items-start gap-3">
-        <EventImage imageUrl={imageUrl} className="h-14 w-14 shrink-0 rounded-xl" />
+    <article className={CARD_CLASS}>
+      <div className="flex gap-4 p-4">
+        <EventImage
+          imageUrl={imageUrl}
+          className="h-14 w-14 shrink-0 rounded-xl"
+          fallback={
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#f3f4f6] text-[#374151]" aria-hidden>
+              <Repeat className="h-6 w-6" />
+            </div>
+          }
+        />
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold leading-snug text-[#374151]">{first.summary?.trim() || 'Sem título'}</h3>
+          <h3 className="text-lg font-bold leading-snug text-[#374151]">{first.summary?.trim() || 'Sem título'}</h3>
           <p className="mt-0.5 text-sm text-[#4b5563]">
-            {weekdayLabel && <span className="first-letter:uppercase">{weekdayLabel}</span>}
+            {weekdayLabel && <span>{weekdayLabel}</span>}
             {weekdayLabel && timeLabel && ' · '}
             {timeLabel && <span className="font-semibold text-[#374151]">{timeLabel}</span>}
           </p>
+          <ul className="mt-2 flex flex-wrap gap-2" aria-label="Datas">
+            {group.map((event) => {
+              const s = event.start?.dateTime || event.start?.date;
+              const isToday = isSameDay(s, today);
+              const d = new Date(s);
+              const chipTime = sameTime ? '' : formatTimeRange(s, null, !!event.start?.date);
+              return (
+                <li
+                  key={event.id}
+                  data-event-id={event.id || undefined}
+                  className={`scroll-mt-6 rounded-full px-3 py-1.5 text-sm font-semibold ${
+                    isToday ? 'bg-[#374151] text-white' : 'bg-[#f3f4f6] text-[#374151]'
+                  }`}
+                >
+                  {isToday ? 'Hoje' : `${d.getDate()}/${String(d.getMonth() + 1).padStart(2, '0')}`}
+                  {chipTime && <span className="font-normal"> · {chipTime}</span>}
+                </li>
+              );
+            })}
+          </ul>
         </div>
-        <ShareButton event={first} compact />
       </div>
-      <ul className="mt-3 flex flex-wrap gap-2" aria-label="Datas">
-        {group.map((event) => {
-          const s = event.start?.dateTime || event.start?.date;
-          const isToday = isSameDay(s, today);
-          const d = new Date(s);
-          const chipTime = sameTime ? '' : formatTimeRange(s, null, !!event.start?.date);
-          return (
-            <li
-              key={event.id}
-              data-event-id={event.id || undefined}
-              className={`scroll-mt-6 rounded-full px-3 py-1.5 text-sm font-semibold ${
-                isToday ? 'bg-[#374151] text-white' : 'bg-[#f3f4f6] text-[#374151]'
-              }`}
-            >
-              {isToday ? 'Hoje' : `${d.getDate()}/${String(d.getMonth() + 1).padStart(2, '0')}`}
-              {chipTime && <span className="font-normal"> · {chipTime}</span>}
-            </li>
-          );
-        })}
-      </ul>
-      {first.location && (
-        <div className="mt-1">
-          <MapsLink location={first.location} />
-        </div>
-      )}
+      <CardFooter event={first} />
     </article>
   );
 }
