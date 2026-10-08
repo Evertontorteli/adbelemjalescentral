@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { injectSpeedInsights } from '@vercel/speed-insights';
 import { inject as injectAnalytics, pageview } from '@vercel/analytics';
 import { Navigation } from './components/Navigation.jsx';
+import { Splash } from './components/Splash.jsx';
 import { Inicio } from './pages/Inicio.jsx';
 import EventosPage from './pages/Eventos.jsx';
 import IgrejaPage from './pages/Igreja.jsx';
@@ -56,6 +57,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <Splash />
       <Navigation />
       <Routes>
         <Route path="/" element={<Inicio />} />

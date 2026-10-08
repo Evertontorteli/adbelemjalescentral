@@ -14,7 +14,7 @@ const ATALHOS = [
 ];
 
 const ATALHO_CLASS =
-  'flex min-h-[5.5rem] flex-col justify-between gap-2 rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 text-[#374151] shadow-sm transition-colors hover:bg-gray-50 active:bg-gray-100';
+  'flex min-h-[5.5rem] flex-col justify-between gap-2 rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 text-[#374151] shadow-[0_6px_20px_rgba(17,24,39,0.10)] transition-colors hover:bg-gray-50 active:bg-gray-100';
 
 function Atalhos() {
   return (
@@ -46,7 +46,7 @@ function OndeEstamos() {
       <h2 id="onde-estamos" className="mb-3 text-lg font-semibold text-[#374151]">
         Onde estamos
       </h2>
-      <div className="rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 shadow-[0_6px_20px_rgba(17,24,39,0.10)]">
         <p className="text-base font-bold text-[#374151]">Templo Central</p>
         <address className="mt-1 not-italic text-sm leading-relaxed text-[#4b5563]">
           {ENDERECO.rua} – {ENDERECO.bairro}
@@ -93,7 +93,7 @@ export function Inicio() {
   return (
     <div className="bg-white pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-0">
       <Apresentacao />
-      <div className="mx-auto flex max-w-3xl flex-col gap-8 pb-10">
+      <div className="mx-auto flex max-w-3xl flex-col gap-8 pt-5 pb-10 lg:pt-0">
         <ProximosEventos />
         <Atalhos />
         <OndeEstamos />

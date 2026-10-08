@@ -61,6 +61,8 @@
             "web-push": "^3.6.7"
       },
       "devDependencies": {
+            "@parcel/packager-raw-url": "^2.16.4",
+            "@parcel/transformer-webmanifest": "^2.16.4",
             "parcel": "^2.14.0",
             "parcel-reporter-static-files-copy": "^1.5.3",
             "serve-static": "^2.2.1"
