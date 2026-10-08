@@ -11,38 +11,7 @@ function WhatsAppIcon({ className }) {
 }
 import { GOOGLE_CALENDAR_API_KEY as API_KEY, GOOGLE_CALENDAR_ID as CALENDAR_ID } from '../config/calendar.js';
 import { isPushConfigured, VAPID_PUBLIC_KEY } from '../config/push.js';
-
-function isImageAttachment(att) {
-  if (att.mimeType?.startsWith('image/')) return true;
-  if (!att.fileUrl) return false;
-  const path = att.fileUrl.split('?')[0].toLowerCase();
-  return /\.(jpg|jpeg|png|gif|webp|bmp)(\?|$)/i.test(path);
-}
-
-function toDirectImageUrl(att) {
-  const fileId = att.fileId ?? (att.fileUrl?.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)?.[1] ?? att.fileUrl?.match(/[?&]id=([a-zA-Z0-9_-]+)/)?.[1]);
-  if (fileId) return `https://drive.google.com/uc?export=view&id=${fileId}`;
-  if (att.fileUrl && !att.fileUrl.includes('drive.google.com')) return att.fileUrl;
-  return null;
-}
-
-function getEventImageUrl(event) {
-  const attachments = event.attachments ?? [];
-  for (const att of attachments) {
-    if (!att.fileUrl && !att.fileId) continue;
-    if (!isImageAttachment(att)) continue;
-    const direct = toDirectImageUrl(att);
-    if (direct) return direct;
-    if (att.fileUrl && !att.fileUrl.includes('drive.google.com')) return att.fileUrl;
-  }
-  if (event.description) {
-    const imgMatch = event.description.match(/!\[[^\]]*\]\((https?:\/\/[^)]+)\)|<img[^>]+src=["'](https?:\/\/[^"']+)["']/i);
-    if (imgMatch) return imgMatch[1] ?? null;
-    const urlMatch = event.description.match(/(https?:\/\/[^\s<>"]+\.(?:jpg|jpeg|png|gif|webp))/i);
-    if (urlMatch) return urlMatch[1];
-  }
-  return null;
-}
+import { getEventImageUrl, formatTimeRange, isSameDay } from '../utils/eventos.js';
 
 function formatEventDateLong(dateStr) {
   if (!dateStr) return '—';
@@ -81,18 +50,6 @@ function formatEventDateRangeLong(startStr, endStr, isAllDay) {
     return `${startFormatted} a ${endFormatted}`;
   } catch {
     return startFormatted;
-  }
-}
-
-function formatTimeRange(start, end, isAllDay) {
-  if (isAllDay || !start) return '';
-  try {
-    const startStr = new Date(start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
-    if (!end) return startStr;
-    const endStr = new Date(end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
-    return `${startStr} - ${endStr}`;
-  } catch {
-    return '';
   }
 }
 
@@ -190,11 +147,6 @@ function shareOnWhatsApp(event) {
 
 function getMapsUrl(location) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
-}
-
-function isSameDay(dateStr, ref) {
-  const d = new Date(dateStr);
-  return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate();
 }
 
 /** Nome do evento normalizado, para agrupar eventos iguais cadastrados avulsos no Google Calendar. */
@@ -402,8 +354,16 @@ function WeeklySeriesCard({ group, today }) {
 
 export default function Eventos() {
   const now = new Date();
-  const [month, setMonth] = useState(now.getMonth());
-  const [year, setYear] = useState(now.getFullYear());
+  const [searchParams] = useSearchParams();
+  // ?m=&y= abre direto no mês do evento (links do Início para eventos do mês seguinte)
+  const [month, setMonth] = useState(() => {
+    const m = Number.parseInt(searchParams.get('m'), 10);
+    return m >= 0 && m <= 11 ? m : now.getMonth();
+  });
+  const [year, setYear] = useState(() => {
+    const y = Number.parseInt(searchParams.get('y'), 10);
+    return Math.abs(y - now.getFullYear()) <= 2 ? y : now.getFullYear();
+  });
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -543,7 +503,6 @@ export default function Eventos() {
   };
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i);
-  const [searchParams] = useSearchParams();
   const eventIdFromUrl = searchParams.get('e');
 
   useEffect(() => {

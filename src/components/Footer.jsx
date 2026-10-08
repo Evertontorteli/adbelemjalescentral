@@ -1,31 +1,9 @@
-import { ArrowUp } from 'lucide-react';
-
 export function Footer() {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
-    <footer
-      className="relative overflow-hidden"
-      style={{
-        background: 'linear-gradient(135deg, #4b5563 0%, #374151 50%, #1f2937 100%)',
-      }}
-    >
-      <div className="relative z-10 py-8 md:py-10 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-white/80 text-sm md:text-base text-center sm:text-left order-2 sm:order-1">
-            Desenvolvido por Everton Torteli • © {new Date().getFullYear()} Todos os direitos reservados
-          </p>
-          <button
-            onClick={scrollToTop}
-            className="group flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full transition-all duration-300 border border-white/20 shrink-0 order-1 sm:order-2"
-          >
-            <span>Voltar ao topo</span>
-            <ArrowUp className="w-5 h-5 group-hover:-translate-y-1 transition-transform duration-300" />
-          </button>
-        </div>
-      </div>
+    <footer className="border-t border-[#e5e7eb] bg-[#f9fafb] px-4 py-6">
+      <p className="mx-auto max-w-3xl text-center text-xs text-[#6b7280]">
+        © {new Date().getFullYear()} AD Belém Jales · Desenvolvido por Everton Torteli
+      </p>
     </footer>
   );
 }
