@@ -14,16 +14,22 @@ const ATALHOS = [
 ];
 
 const ATALHO_CLASS =
-  'flex min-h-[5.5rem] flex-col justify-between gap-2 rounded-2xl border border-[#e5e7eb]/80 bg-white p-4 text-[#374151] shadow-[0_6px_20px_rgba(17,24,39,0.10)] transition-colors hover:bg-gray-50 active:bg-gray-100';
+  'flex w-[6.25rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-[#e5e7eb]/80 bg-white px-1 py-3 text-center text-[#374151] shadow-[0_6px_20px_rgba(17,24,39,0.10)] transition-colors hover:bg-gray-50 active:bg-gray-100 md:w-auto md:flex-1';
 
+/** Faixa de atalhos que desliza para o lado no celular; no computador cabem todos lado a lado. */
 function Atalhos() {
   return (
-    <nav aria-label="Atalhos" className="grid grid-cols-2 gap-3 px-4 md:grid-cols-4">
+    <nav
+      aria-label="Atalhos"
+      className="sem-barra-rolagem -mb-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pt-1 pb-4 md:overflow-visible"
+    >
       {ATALHOS.map(({ label, to, href, Icon, externo }) => {
         const conteudo = (
           <>
-            <Icon className="h-6 w-6" aria-hidden />
-            <span className="text-sm font-semibold leading-tight">{label}</span>
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f6]" aria-hidden>
+              <Icon className="h-5 w-5" />
+            </span>
+            <span className="text-xs font-semibold leading-tight">{label}</span>
           </>
         );
         return externo ? (
@@ -36,6 +42,8 @@ function Atalhos() {
           </Link>
         );
       })}
+      {/* Espaço no fim da faixa: o padding direito some em listas com rolagem horizontal */}
+      <span className="w-px shrink-0 md:hidden" aria-hidden />
     </nav>
   );
 }
@@ -94,10 +102,10 @@ export function Inicio() {
     <div className="bg-white pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-0">
       <Apresentacao />
       <div className="mx-auto flex max-w-3xl flex-col gap-8 pt-5 pb-10 lg:pt-0">
-        <ProximosEventos />
         <Atalhos />
-        <OndeEstamos />
+        <ProximosEventos />
         <Pastor />
+        <OndeEstamos />
         <RedesSociais />
       </div>
       <Footer />

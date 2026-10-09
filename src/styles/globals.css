@@ -252,3 +252,11 @@ typebot-bubble::part(button) {
     animation: none;
   }
 }
+
+/* Faixas com rolagem horizontal (ex.: atalhos do Início) sem barra de rolagem visível */
+.sem-barra-rolagem {
+  scrollbar-width: none;
+}
+.sem-barra-rolagem::-webkit-scrollbar {
+  display: none;
+}
