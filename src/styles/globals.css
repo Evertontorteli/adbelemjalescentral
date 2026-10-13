@@ -195,6 +195,10 @@
 
 html {
   font-size: var(--font-size);
+  /* Sem zoom por toque duplo e sem o navegador aumentar o texto sozinho */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* Navegação: header só no desktop, barra só no mobile (breakpoint 1024px) */
@@ -259,4 +263,15 @@ typebot-bubble::part(button) {
 }
 .sem-barra-rolagem::-webkit-scrollbar {
   display: none;
+}
+
+/* Celular deitado: cobre o site pedindo para voltar à posição vertical
+   (o iPhone não deixa travar a rotação; no Android instalado o manifest já trava) */
+.aviso-paisagem {
+  display: none;
+}
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .aviso-paisagem {
+    display: flex;
+  }
 }

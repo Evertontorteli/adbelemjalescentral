@@ -7,6 +7,9 @@ import "./styles/globals.css";
 
 createRoot(document.getElementById("root")).render(<App />);
 
+// iPhone ignora user-scalable=no: bloqueia o zoom de pinça pelo gesto do Safari
+document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+
 Typebot.initBubble({
   typebot: "chatadbelemjales",
   // Sem balão de boas-vindas automático: o botão chama atenção com animação (ver globals.css)
